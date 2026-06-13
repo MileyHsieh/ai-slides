@@ -607,7 +607,7 @@ def compile_presentation():
         print(f"❌ 找不到簡報檔案：請確認 {course_name}_簡報.md 在 📌 進行中 或 📦 備課庫 資料夾中")
         return
 
-    output_file = os.path.join(current_dir, f"{course_name}_簡報.html")
+    output_file = os.path.join(current_dir, "index.html")
     template_file = os.path.join(current_dir, "index.template.html")
 
     print("=================== HTML簡報編譯器 ===================")
@@ -659,8 +659,7 @@ def compile_presentation():
         f.write(final_html)
 
     print(f"2. 成功輸出簡報檔案：{output_file}")
-    print(f"")
-    print(f"⚠️  上傳 GitHub Pages 前，請先將 {course_name}_簡報.html 改名為 index.html")
+    print(f"   (已直接輸出為 index.html，GitHub Pages 可直接使用)")
 
     # 同步修改 app.js 中的總頁數變數
     app_js_path = os.path.join(current_dir, "app.js")

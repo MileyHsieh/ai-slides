@@ -1366,5 +1366,50 @@ body {
   line-height: 1.4;
 }
 
+/* ==================== 4. 手機直向旋轉提示 ==================== */
+/* 簡報為 16:9 固定畫布，手機直向會被縮得極小。
+   在窄螢幕「直向」時蓋上提示，引導使用者轉成橫向觀看。 */
+#rotate-hint {
+  display: none;
+}
+
+@media (max-width: 820px) and (orientation: portrait) {
+  /* 直向時隱藏縮到極小的簡報，改顯示提示 */
+  #presenter-view {
+    display: none;
+  }
+  #rotate-hint {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background-color: var(--bg-color-main);
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+  }
+  .rotate-hint-inner .rotate-icon {
+    font-size: 4.5rem;
+    display: inline-block;
+    animation: rotate-phone 2.2s ease-in-out infinite;
+  }
+  .rotate-hint-inner p {
+    margin-top: 1.8rem;
+    font-size: 1.35rem;
+    font-weight: 500;
+    line-height: 1.7;
+    color: var(--text-color-secondary);
+  }
+  .rotate-hint-inner p strong {
+    color: var(--emphasis-orange);
+    font-weight: 900;
+  }
+  @keyframes rotate-phone {
+    0%, 40%   { transform: rotate(0deg); }
+    60%, 100% { transform: rotate(-90deg); }
+  }
+}
+
 
 
