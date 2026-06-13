@@ -1,0 +1,15 @@
+# Claude Code 本機設定
+.claude/
+
+# Google 雲端硬碟線上原生檔案(只是捷徑,git 讀不到)
+*.gform
+*.gdoc
+*.gsheet
+*.gslides
+*.gdraw
+
+# Windows / Google Drive 產生的雜檔
+Thumbs.db
+desktop.ini
+*.tmp
+~$*

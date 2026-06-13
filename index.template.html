@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI簡報設計：表達是靈魂，工具是手腳</title>
+  <!-- 導入 Noto Sans TC 字體提升視覺質感 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ==================== 講師與學生共用簡報介面 ==================== -->
+  <div id="presenter-view" class="view-active">
+    
+    <!-- 幻燈片主容器 -->
+    <div class="slides-container" id="slides-container">
+      
+      <!-- SLIDES_PLACEHOLDER -->
+
+    </div>
+
+    <!-- 簡報導航按鈕 -->
+    <div class="navigation-controls">
+      <button id="prev-slide-btn" class="nav-btn">◀</button>
+      <span id="slide-number-display">1 / 10</span>
+      <button id="next-slide-btn" class="nav-btn">▶</button>
+      <button id="fullscreen-btn" class="nav-btn" title="全螢幕模式">⛶</button>
+    </div>
+  </div>
+
+  <!-- 引入主邏輯 JS -->
+  <script src="app.js"></script>
+</body>
+</html>
