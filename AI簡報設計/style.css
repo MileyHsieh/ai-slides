@@ -1,0 +1,1415 @@
+/* ==========================================
+   AI簡報設計 - 視覺與排版系統 (style.css)
+   ========================================== */
+
+/* 全域變數定義 */
+:root {
+  --bg-color-main: #FAF9F6;       /* 暖淺白背景 */
+  --bg-color-card: #FFFFFF;       /* 卡片白色背景 */
+  --text-color-primary: #1A1A1A;  /* 粗黑/深炭色主文字 */
+  --text-color-secondary: #555555;/* 灰色輔助字 */
+  
+  /* 色彩標識 */
+  --highlight-blue: rgba(135, 206, 250, 0.45); /* 淺藍螢光筆色 */
+  --emphasis-orange: #E65C00;     /* 強調深橘色 */
+  --border-color: #E2E8F0;
+  
+  /* 卡片投影與圓角 */
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.08);
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+}
+
+/* 基礎重置與字體 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-color-main);
+  color: var(--text-color-primary);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==================== 視覺核心元件 ==================== */
+
+/* 粗黑大字 */
+.font-giant {
+  font-size: 4rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.font-huge {
+  font-size: 2.8rem;
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+.font-large {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.font-medium {
+  font-size: 1.4rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.font-small {
+  font-size: 1.1rem;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+/* 淺藍色螢光筆畫線 */
+.hl-blue {
+  background: linear-gradient(180deg, transparent 45%, var(--highlight-blue) 45%);
+  padding: 0 6px;
+  font-weight: 900;
+  display: inline;
+}
+
+/* 強調重點 (深橘色) */
+.emphasis {
+  color: var(--emphasis-orange);
+  font-weight: 900;
+}
+
+.gray-text {
+  color: var(--text-color-secondary);
+}
+
+.margin-top-md {
+  margin-top: 2rem;
+}
+
+.margin-top-sm {
+  margin-top: 1rem;
+}
+
+.margin-bottom-sm {
+  margin-bottom: 1rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* 按鈕樣式 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 1.8rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary {
+  background-color: var(--text-color-primary);
+  color: #FFFFFF;
+}
+
+.btn-primary:hover {
+  background-color: var(--emphasis-orange);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--text-color-primary);
+  border: 2px solid var(--text-color-primary);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.btn-disabled {
+  background-color: #E2E8F0;
+  color: #A0AEC0;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* ==================== 視窗分流 (Presenter / Student) ==================== */
+.view-active {
+  display: block !important;
+}
+
+.view-inactive {
+  display: none !important;
+}
+
+/* ==================== 1. 講師投影模式樣式 ==================== */
+#presenter-view {
+  display: none;
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+/* 幻燈片主容器 — 固定 1280×720 設計尺寸，由 JS resizeSlides() 縮放以適配任何螢幕 */
+.slides-container {
+  width: 1280px;
+  height: 720px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+}
+
+/* 單張幻燈片結構 */
+.slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+  padding: 4rem 6rem 8rem 6rem;
+  background-color: var(--bg-color-main);
+}
+
+.active-slide {
+  opacity: 1;
+  visibility: visible;
+  z-index: 10;
+}
+
+/* 幻燈片內容版面配置 */
+.slide-content {
+  width: 100%;
+  max-width: 1200px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+.center-content {
+  align-items: center;
+  text-align: center;
+}
+
+/* 分類與裝飾性標籤 */
+.tag {
+  background-color: rgba(230, 92, 0, 0.1);
+  color: var(--emphasis-orange);
+  padding: 0.5rem 1.2rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  display: inline-block;
+}
+
+.tag-category {
+  position: absolute;
+  top: -3rem;
+  left: 0;
+  background-color: var(--emphasis-orange);
+  color: #FFFFFF;
+  padding: 0.4rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-radius: 4px;
+  text-transform: uppercase;
+  z-index: 50;
+}
+
+.slide-title {
+  margin-bottom: 1.5rem;
+}
+
+.slide-subtitle {
+  margin-bottom: 3rem;
+  color: var(--text-color-secondary);
+}
+
+.slide-footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  border-top: 2px solid var(--border-color);
+  padding-top: 1.5rem;
+  font-size: 1.1rem;
+  color: var(--text-color-secondary);
+  font-weight: 500;
+}
+
+.slide-heading {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 2rem;
+  line-height: 1.2;
+}
+
+.slide-desc {
+  margin-bottom: 2rem;
+  max-width: 800px;
+}
+
+/* ==================== 文字雲投影片版面 ==================== */
+.split-layout {
+  flex-direction: row;
+  align-items: center;
+  gap: 3rem;
+}
+
+.left-col {
+  flex: 1.2;
+  display: flex;
+  flex-direction: column;
+}
+
+.right-col {
+  flex: 1.8;
+  height: 80%;
+  background-color: var(--bg-color-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.wc-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#word-cloud-canvas {
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+}
+
+.wc-placeholder {
+  position: absolute;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #A0AEC0;
+  pointer-events: none;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.4; }
+}
+
+/* QR碼區域 */
+.qr-box {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background-color: var(--bg-color-card);
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--border-color);
+  margin-bottom: 1.5rem;
+}
+
+.qr-box img {
+  width: 140px;
+  height: 140px;
+  border-radius: 8px;
+}
+
+.qr-info code {
+  display: inline-block;
+  background-color: #EDF2F7;
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  font-family: monospace;
+  font-size: 0.95rem;
+  margin: 0.5rem 0;
+  word-break: break-all;
+  color: var(--text-color-primary);
+}
+
+.room-tag {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.interactive-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.5rem;
+}
+
+.interactive-status p {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+/* ==================== Slide 3: 概念卡片樣式 ==================== */
+.concept-cards {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.card {
+  flex: 1;
+  background-color: var(--bg-color-card);
+  padding: 2.5rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--border-color);
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-title {
+  margin-bottom: 1rem;
+}
+
+.arrow-connector {
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--emphasis-orange);
+}
+
+.highlight-box {
+  background-color: rgba(135, 206, 250, 0.15);
+  border-left: 6px solid #87CEFA;
+  padding: 1.5rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* ==================== Slide 4: 列表與口號範例 ==================== */
+.bullet-list {
+  list-style: none;
+  margin: 1.5rem 0;
+}
+
+.bullet-list li {
+  position: relative;
+  padding-left: 2rem;
+  margin-bottom: 1.2rem;
+}
+
+.bullet-list li .emphasis {
+  font-size: 1.15em;
+}
+
+.bullet-list li::before {
+  content: "✦";
+  position: absolute;
+  left: 0;
+  color: var(--emphasis-orange);
+  font-weight: 900;
+}
+
+.slogan-examples {
+  background-color: var(--bg-color-card);
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-color);
+}
+
+.example-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 0.8rem;
+}
+
+.example-item {
+  background-color: var(--bg-color-main);
+  padding: 1.2rem;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.15rem;
+  border: 2px dashed #CBD5E0;
+}
+
+/* ==================== 三欄格局樣式 ==================== */
+.grid-three-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.grid-card {
+  background-color: var(--bg-color-card);
+  padding: 2rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--border-color);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.grid-card h3 {
+  font-size: 1.6rem;
+  font-weight: 900;
+  margin-top: 0.5rem;
+}
+
+.grid-card p {
+  font-size: 1.4rem;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.num-badge {
+  position: absolute;
+  top: -15px;
+  left: 20px;
+  background-color: var(--emphasis-orange);
+  color: #FFFFFF;
+  font-weight: 900;
+  font-size: 1.1rem;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.principle-card {
+  background-color: var(--bg-color-card);
+  padding: 2rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--border-color);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.card-icon {
+  font-size: 2.5rem;
+}
+
+.principle-card h3 {
+  font-size: 1.3rem;
+  font-weight: 900;
+}
+
+/* ==================== Slide 7: 糾錯找不同遊戲 ==================== */
+.game-container {
+  display: flex;
+  gap: 2rem;
+  height: calc(100% - 100px);
+  margin-top: 1rem;
+}
+
+/* NG 投影片設計 */
+.ng-slide-canvas {
+  flex: 2;
+  background: linear-gradient(135deg, #00FF00 0%, #32CD32 100%); /* 極刺眼綠色 */
+  border: 8px solid #FF00FF; /* 刺眼桃紅邊框 */
+  border-radius: var(--radius-sm);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+  font-family: "MS Serif", "New York", "Noto Serif TC", serif; /* 老舊字體 */
+  transition: all 1s ease-in-out;
+}
+
+.ng-header {
+  color: #FF0000; /* 紅色標題 */
+  font-size: 2.2rem;
+  font-weight: 900;
+  text-align: center;
+  padding: 0.5rem;
+  text-shadow: 2px 2px 0px #FFFF00; /* 黃色陰影 */
+}
+
+.ng-layout-body {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+
+.ng-leftclickable {
+  flex: 1.3;
+  background-color: rgba(255, 255, 255, 0.7);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  overflow-y: auto;
+  font-size: 0.95rem;
+  color: #000000;
+  line-height: 1.4;
+}
+
+.ng-leftclickable h3 {
+  font-size: 1.2rem;
+  color: #0000FF; /* 藍色標題 */
+  margin-bottom: 0.5rem;
+}
+
+.ng-rightclickable {
+  flex: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ng-image-placeholder {
+  width: 100%;
+  height: 80%;
+  border: 4px dashed #000;
+  transform: rotate(-3deg); /* 歪斜效果 */
+  background-color: #FFFFE0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #555500;
+}
+
+.ng-footer {
+  background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: 1.1rem;
+  font-weight: 900;
+  text-align: center;
+  padding: 0.3rem;
+  border: 2px solid #FF00FF;
+  animation: rainbow-blink 1s infinite alternate;
+}
+
+@keyframes rainbow-blink {
+  0% { background-color: rgba(255, 255, 0, 0.3); }
+  100% { background-color: rgba(0, 255, 255, 0.3); }
+}
+
+/* 遊戲糾錯反饋面板 */
+.game-feedback-panel {
+  flex: 1;
+  background-color: var(--bg-color-card);
+  padding: 2rem;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.feedback-title {
+  font-size: 1.25rem;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0.8rem;
+  color: var(--text-color-primary);
+}
+
+.feedback-body {
+  font-size: 1.1rem;
+  margin: 1.5rem 0;
+  flex-grow: 1;
+  color: var(--text-color-secondary);
+}
+
+.found-counter {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem;
+  background-color: var(--bg-color-main);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+/* 可點擊出錯的元素特效 */
+.clickable-element {
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.clickable-element:hover {
+  outline: 3px dashed var(--emphasis-orange);
+  outline-offset: 4px;
+}
+
+/* 錯誤已被找出後的標示 */
+.element-rectified {
+  outline: 3px solid #3182CE !important;
+  outline-offset: 4px;
+}
+
+/* 一鍵淨化後的 Good 樣式 (極簡白底風格) */
+.purified-slide-canvas {
+  background: var(--bg-color-card) !important;
+  border: 2px solid var(--border-color) !important;
+  font-family: 'Noto Sans TC', sans-serif !important;
+  padding: 2.5rem !important;
+  color: var(--text-color-primary) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.purified-slide-canvas .ng-header {
+  color: var(--text-color-primary) !important;
+  text-shadow: none !important;
+  font-size: 2.6rem !important;
+  text-align: left !important;
+  font-weight: 900 !important;
+  padding: 0 !important;
+}
+
+.purified-slide-canvas .ng-layout-body {
+  margin: 1.5rem 0 !important;
+  gap: 2rem !important;
+}
+
+.purified-slide-canvas .ng-leftclickable {
+  background: transparent !important;
+  padding: 0 !important;
+  font-size: 1.2rem !important;
+  color: var(--text-color-primary) !important;
+}
+
+.purified-slide-canvas .ng-leftclickable h3 {
+  display: none !important; /* 標題整合進主體 */
+}
+
+.purified-slide-canvas .ng-leftclickable p {
+  line-height: 1.6 !important;
+}
+
+.purified-slide-canvas .ng-rightclickable {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.purified-slide-canvas .ng-image-placeholder {
+  border: none !important;
+  transform: none !important;
+  background-color: var(--bg-color-main) !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  color: var(--emphasis-orange) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.purified-slide-canvas .ng-footer {
+  background: none !important;
+  color: var(--text-color-secondary) !important;
+  border: none !important;
+  font-size: 1rem !important;
+  text-align: left !important;
+  font-weight: 500 !important;
+  padding: 1rem 0 0 0 !important;
+  border-top: 2px solid var(--border-color) !important;
+  animation: none !important;
+}
+
+/* ==================== Slide 8: 結論點樣式 ==================== */
+.summary-points {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  text-align: left;
+  max-width: 700px;
+}
+
+.summary-point {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background-color: var(--bg-color-card);
+  padding: 1.2rem 2rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--border-color);
+}
+
+.summary-point .num {
+  background-color: var(--text-color-primary);
+  color: #FFFFFF;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.2rem;
+  flex-shrink: 0; /* 確保數字圓圈不會被壓縮變形 */
+}
+
+.summary-text {
+  flex: 1;
+  text-align: left;
+  line-height: 1.6;
+}
+
+/* 確保重點標籤詞彙在排版時不會中途斷字，維持完整閱讀性 */
+.summary-text span {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.final-quote {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--emphasis-orange);
+  background-color: rgba(230, 92, 0, 0.05);
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  border: 2px dashed var(--emphasis-orange);
+}
+
+.slogan-box {
+  background-color: var(--bg-color-card);
+  padding: 2rem 4rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  border: 3px solid var(--text-color-primary);
+  font-size: 2.2rem;
+  transform: rotate(-1deg);
+}
+
+/* ==================== 底部導航控制條 ==================== */
+.navigation-controls {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background-color: var(--bg-color-card);
+  padding: 0.6rem 1.5rem;
+  border-radius: 50px;
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--border-color);
+  z-index: 100;
+  opacity: 0.15;
+  transition: opacity 0.3s ease;
+}
+
+.navigation-controls:hover {
+  opacity: 1;
+}
+
+.nav-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.3rem;
+  font-weight: bold;
+  cursor: pointer;
+  color: var(--text-color-primary);
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.nav-btn:hover {
+  background-color: var(--bg-color-main);
+  color: var(--emphasis-orange);
+}
+
+#slide-number-display {
+  font-size: 1.1rem;
+  font-weight: 700;
+  min-width: 60px;
+  text-align: center;
+}
+
+
+/* ==================== 2. 學生手機回答模式樣式 ==================== */
+#student-view {
+  display: none;
+  background-color: var(--bg-color-main);
+  min-height: 100vh;
+  width: 100vw;
+  overflow-y: auto;
+}
+
+.student-container {
+  max-width: 480px;
+  margin: 0 auto;
+  background-color: var(--bg-color-card);
+  min-height: 100vh;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.student-header {
+  background-color: var(--text-color-primary);
+  color: #FFFFFF;
+  padding: 1.8rem;
+  text-align: center;
+}
+
+.student-logo {
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.student-subtitle {
+  font-size: 1rem;
+  opacity: 0.7;
+  margin-top: 0.3rem;
+}
+
+.student-main {
+  flex-grow: 1;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text-color-secondary);
+  background-color: var(--bg-color-main);
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  align-self: flex-start;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-green {
+  background-color: #48BB78;
+  box-shadow: 0 0 8px #48BB78;
+}
+
+.interactive-form-box {
+  background-color: var(--bg-color-main);
+  padding: 1.8rem;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-color);
+}
+
+.question-title {
+  font-size: 1.4rem;
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+}
+
+.question-desc {
+  color: var(--text-color-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.input-group input {
+  padding: 1rem;
+  font-size: 1.2rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  outline: none;
+  font-family: inherit;
+  font-weight: 700;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.input-group input:focus {
+  border-color: var(--emphasis-orange);
+}
+
+.input-group button {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.2rem;
+}
+
+.error-msg {
+  color: #E53E3E;
+  font-size: 0.95rem;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* 成功畫面樣式 */
+.success-box {
+  background-color: #F0FFF4;
+  border: 2px solid #C6F6D5;
+  border-radius: var(--radius-md);
+  padding: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  animation: slideIn 0.3s ease;
+}
+
+.success-hidden {
+  display: none !important;
+}
+
+.success-icon {
+  background-color: #38A169;
+  color: #FFFFFF;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.info-card {
+  background-color: rgba(230, 92, 0, 0.03);
+  border: 1px solid rgba(230, 92, 0, 0.15);
+  border-radius: var(--radius-sm);
+  padding: 1.2rem;
+}
+
+.info-card h4 {
+  color: var(--emphasis-orange);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.student-footer {
+  text-align: center;
+  padding: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--text-color-secondary);
+  border-top: 2px solid var(--border-color);
+}
+
+/* ==================== 3. 列印與 PDF 匯出專用樣式 (@media print) ==================== */
+@page {
+  size: landscape; /* 強制所有印表機套用橫向列印 */
+  margin: 0;       /* 移除瀏覽器預設頁首頁尾白邊 */
+}
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 0;
+  }
+
+  html, body {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    overflow: visible !important;
+    height: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 14pt !important;
+    -webkit-print-color-adjust: exact !important; /* 強制列印背景顏色與漸層 */
+    print-color-adjust: exact !important;
+  }
+
+  /* 移除絕對定位以支援順暢的分頁 */
+  #presenter-view, 
+  .slides-container {
+    display: block !important;
+    position: static !important;
+    height: auto !important;
+    width: 100% !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 將每一張投影片設為區塊元素，並在結尾強制分頁，高度鎖定為視窗高 */
+  .slide {
+    position: relative !important;
+    display: block !important; /* 必須為 block，Chrome 才能正確識別 page-break */
+    float: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    width: 100% !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 4rem 6rem !important;
+    box-sizing: border-box !important;
+    background-color: #FFFFFF !important;
+    overflow: hidden !important;
+  }
+
+  /* 內部的彈性盒子用來進行垂直居中對齊 */
+  .slide-content {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    height: 100% !important;
+    max-height: 100% !important;
+  }
+
+  /* 文字雲列印最佳化：文字雲區域與QR Code調整 */
+  .split-layout {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 2rem !important;
+    align-items: center !important;
+    height: 100% !important;
+  }
+
+  .left-col {
+    flex: 1 !important;
+  }
+
+  .right-col {
+    flex: 1.5 !important;
+    height: 80% !important;
+    border: 2px solid #CBD5E0 !important;
+    box-shadow: none !important;
+    background-color: #FFFFFF !important;
+  }
+
+  /* 隱藏互動性及無關列印的介面元素 */
+  .navigation-controls,
+  #clear-words-btn,
+  .interactive-status button,
+  #purify-btn,
+  .interactive-form-box {
+    display: none !important;
+  }
+
+  /* 糾錯找不同在列印時隱藏反饋面板與多餘控制 */
+  .game-feedback-panel {
+    border: 1px solid #CBD5E0 !important;
+    box-shadow: none !important;
+    padding: 1.5rem !important;
+  }
+
+  /* 手機回答模式在列印簡報時隱藏 */
+  #student-view {
+    display: none !important;
+  }
+
+  /* 讓黑底投影片在 PDF 列印中維持黑底白字 */
+  .slide.dark-slide {
+    background-color: #000000 !important;
+    color: #FFFFFF !important;
+  }
+}
+
+/* ==================== 4. 黑色極簡高對比投影片樣式 (Slide 3) ==================== */
+.slide.dark-slide {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+.dark-slide-layout {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8rem; /* 兩欄間距 */
+  height: 100%;
+}
+
+.dark-slide-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dark-slide-char {
+  font-size: 14rem; /* 巨無霸中文字體 */
+  font-weight: 900;
+  color: #FFFFFF;
+  line-height: 1;
+  margin-bottom: 2.5rem;
+}
+
+.dark-slide-word {
+  font-size: 3.5rem; /* 大字英文 */
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  line-height: 1;
+}
+
+.text-gold {
+  color: #ECC94B; /* 溫潤的金黃色 */
+}
+
+/* ==================== 課程封面 (Title Slide) 專用樣式 ==================== */
+.title-slide {
+  background-image: linear-gradient(rgba(250, 249, 246, 0.45), rgba(250, 249, 246, 0.45)), url('cover_bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.title-slide .slide-title {
+  font-size: 5.5rem !important; /* 標題的字再放大 */
+  font-weight: 900;
+  line-height: 1.1;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.title-slide .tag {
+  background-color: var(--emphasis-orange) !important;
+  color: #FFFFFF !important;
+  font-size: 1.2rem;
+  padding: 0.6rem 1.5rem;
+  border-radius: 50px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 2.5rem;
+}
+
+.title-slide .slide-subtitle {
+  font-size: 2.2rem; /* 副標題也微幅放大以保持視覺平衡 */
+  font-weight: 700;
+  color: var(--text-color-secondary);
+}
+
+/* ==================== Bullet List V2：標題+說明兩行格式 ==================== */
+.bullet-desc-intro {
+  font-size: 1.9rem;
+  font-weight: 500;
+  margin-bottom: 1.2rem;
+  line-height: 1.5;
+}
+
+.bullet-list-v2 {
+  list-style: none;
+  margin: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.bullet-list-v2 li {
+  position: relative;
+  padding-left: 3rem;
+}
+
+.bullet-list-v2 li::before {
+  content: "✦";
+  position: absolute;
+  left: 0;
+  top: 0.15em;
+  color: var(--emphasis-orange);
+  font-weight: 900;
+  font-size: 1.4rem;
+}
+
+.bullet-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--emphasis-orange);
+  line-height: 1.3;
+  margin-bottom: 0.4rem;
+}
+
+.bullet-desc {
+  font-size: 1.9rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-color-primary);
+}
+
+/* ==================== 全頁圖片投影片 (Image Full Slide) ==================== */
+.image-full-slide {
+  padding: 0 !important;
+  background-color: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.full-slide-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* ==================== 主題轉場頁 (Theme Title Slide) 專用樣式 ==================== */
+.theme-title-slide .slide-title {
+  font-size: 3.8rem !important; /* 避免長標題折行過多 */
+  font-weight: 900;
+  line-height: 1.2;
+  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+}
+
+.theme-tag {
+  background-color: var(--emphasis-orange);
+  color: #FFFFFF;
+  font-size: 1.1rem;
+  padding: 0.5rem 1.2rem;
+  border-radius: 4px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  margin-bottom: 2rem;
+  display: inline-block;
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-points-list {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: flex-start;
+  margin: 1.5rem auto 0 auto;
+  text-align: left;
+}
+
+.theme-point-item {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--text-color-primary);
+}
+
+.theme-point-num {
+  background-color: var(--text-color-primary);
+  color: #FFFFFF;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.7rem;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.theme-point-text {
+  line-height: 1.4;
+}
+
+/* ==================== 4. 手機直向旋轉提示 ==================== */
+/* 簡報為 16:9 固定畫布，手機直向會被縮得極小。
+   在窄螢幕「直向」時蓋上提示，引導使用者轉成橫向觀看。 */
+#rotate-hint {
+  display: none;
+}
+
+@media (max-width: 820px) and (orientation: portrait) {
+  /* 直向時隱藏縮到極小的簡報，改顯示提示 */
+  #presenter-view {
+    display: none;
+  }
+  #rotate-hint {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background-color: var(--bg-color-main);
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+  }
+  .rotate-hint-inner .rotate-icon {
+    font-size: 4.5rem;
+    display: inline-block;
+    animation: rotate-phone 2.2s ease-in-out infinite;
+  }
+  .rotate-hint-inner p {
+    margin-top: 1.8rem;
+    font-size: 1.35rem;
+    font-weight: 500;
+    line-height: 1.7;
+    color: var(--text-color-secondary);
+  }
+  .rotate-hint-inner p strong {
+    color: var(--emphasis-orange);
+    font-weight: 900;
+  }
+  @keyframes rotate-phone {
+    0%, 40%   { transform: rotate(0deg); }
+    60%, 100% { transform: rotate(-90deg); }
+  }
+}
+
+
+

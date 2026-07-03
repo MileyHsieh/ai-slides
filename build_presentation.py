@@ -1,6 +1,9 @@
 import sys
 import re
 import os
+import time
+import shutil
+import urllib.parse
 
 # 解決 Windows 終端機 CP950 編碼不支援 Emoji/特殊字元導致的崩潰問題
 if sys.platform.startswith('win'):
@@ -587,31 +590,196 @@ def build_slide_html(slide, current_theme=""):
       </section>
 """
 
-def compile_presentation():
-    # 決定檔案路徑
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    course_name = os.path.basename(current_dir)
+# ===================================================================
+# 📍 路徑設定（唯一真源）— 資料夾搬家時，只需要改這一區
+#    若路徑失效，編譯器會自動在 Obsidian 庫中搜尋新位置並大聲提醒，
+#    不會默默失敗，也不會在錯誤位置建檔。
+#    （同步更新對象：dao-slides skill、Obsidian 根目錄 CLAUDE.md）
+# ===================================================================
+OBSIDIAN_ROOT   = r"G:\我的雲端硬碟\00_個人大腦同步區\Obsidian"
+TALKS_DIR       = os.path.join(OBSIDIAN_ROOT, "💼 20_道務與備課", "21_講題備課")
+ASSETS_BASE_DIR = r"G:\我的雲端硬碟\02_道務與備課\01_講題"   # 各講題圖片來源：[講題]\
+SITE_BASE_URL   = "https://mileyhsieh.github.io/ai-slides/"
 
-    # Obsidian 庫的基礎路徑
-    obsidian_base_dir = r"G:\我的雲端硬碟\00_個人大腦同步區\Obsidian\💼 30_專案與備課\31_講課備課思維"
+IN_PROGRESS = "📌 進行中"
+ARCHIVE     = "📦 備課庫"
 
-    # 自動搜尋：優先找 📌 進行中，再找 📦 備課庫
-    md_file = None
-    for subdir in ["📌 進行中", "📦 備課庫"]:
-        candidate = os.path.join(obsidian_base_dir, subdir, f"{course_name}_簡報.md")
-        if os.path.exists(candidate):
-            md_file = candidate
-            break
 
-    if not md_file:
-        print(f"❌ 找不到簡報檔案：請確認 {course_name}_簡報.md 在 📌 進行中 或 📦 備課庫 資料夾中")
-        return
+def resolve_talks_dir():
+    """回傳含有 📌 進行中 / 📦 備課庫 的備課資料夾；路徑失效時自動搜尋並提醒。"""
+    if os.path.isdir(os.path.join(TALKS_DIR, IN_PROGRESS)):
+        return TALKS_DIR
 
-    output_file = os.path.join(current_dir, "index.html")
-    template_file = os.path.join(current_dir, "index.template.html")
+    print("⚠️  設定的備課資料夾已失效（Obsidian 可能重整過資料夾）：")
+    print(f"    {TALKS_DIR}")
+    print(f"    正在整個 Obsidian 庫中搜尋「{IN_PROGRESS}」...")
+    hits = []
+    for root, dirs, _files in os.walk(OBSIDIAN_ROOT):
+        dirs[:] = [d for d in dirs if not d.startswith('.')]
+        if IN_PROGRESS in dirs:
+            hits.append(root)
+
+    if len(hits) == 1:
+        print(f"✅ 找到新位置：{hits[0]}")
+        print("🔧 本次先用新位置繼續編譯，但請盡快同步更新以下三處（保持系統一致）：")
+        print("    1. 本檔案開頭的 TALKS_DIR")
+        print("    2. dao-slides skill（C:\\Users\\user\\.claude\\skills\\dao-slides\\SKILL.md）")
+        print("    3. Obsidian 根目錄的 CLAUDE.md 資料夾地圖")
+        print("    👉 對 AI 說「備課資料夾搬家了」即可全部自動更新。")
+        return hits[0]
+
+    if hits:
+        print("❌ 找到多個候選位置，無法自動判斷，請告訴 AI「備課資料夾搬家了」來修正設定：")
+        for h in hits:
+            print(f"    - {h}")
+    else:
+        print("❌ 整個 Obsidian 庫中都找不到「📌 進行中」資料夾，請確認 Obsidian 庫位置是否正確。")
+    sys.exit(1)
+
+
+def select_talk(talks_dir, talk_arg=None):
+    """決定要編譯哪一個講題，回傳 (講題名, 簡報.md 完整路徑)。"""
+    if talk_arg:
+        for sub in (IN_PROGRESS, ARCHIVE):
+            candidate = os.path.join(talks_dir, sub, f"{talk_arg}_簡報.md")
+            if os.path.exists(candidate):
+                return talk_arg, candidate
+        print(f"❌ 在 {IN_PROGRESS} 與 {ARCHIVE} 中都找不到「{talk_arg}_簡報.md」。")
+        sys.exit(1)
+
+    prog_dir = os.path.join(talks_dir, IN_PROGRESS)
+    slides_md = sorted(f for f in os.listdir(prog_dir) if f.endswith("_簡報.md"))
+
+    if len(slides_md) == 1:
+        talk = slides_md[0][:-len("_簡報.md")]
+        return talk, os.path.join(prog_dir, slides_md[0])
+
+    if not slides_md:
+        notes_md = sorted(f for f in os.listdir(prog_dir) if f.endswith("_講義.md"))
+        print(f"❌ {IN_PROGRESS} 裡沒有任何 _簡報.md。")
+        if notes_md:
+            print("   目前只有講義稿，請先請 AI 執行步驟三（講義轉簡報）：")
+            for n in notes_md:
+                print(f"    - {n}")
+        sys.exit(1)
+
+    print(f"❌ {IN_PROGRESS} 裡有多份簡報稿，請指定講題，例如：")
+    for s in slides_md:
+        print(f"    編譯簡報.bat {s[:-len('_簡報.md')]}")
+    sys.exit(1)
+
+
+def copy_talk_assets(md_content, talk, talk_dir, repo_dir):
+    """把簡報稿引用到的圖片複製進發布資料夾，回傳找不到的圖片清單。"""
+    refs = re.findall(r'!\[[^\]]*\]\(([^\)]+)\)', md_content)
+    missing = []
+    for src in refs:
+        if src.startswith("http://") or src.startswith("https://"):
+            continue
+        base = os.path.basename(src)
+        dest = os.path.join(talk_dir, src.replace("/", os.sep))
+        found = None
+        for d in (os.path.join(ASSETS_BASE_DIR, talk), os.path.dirname(dest), repo_dir):
+            p = os.path.join(d, base)
+            if os.path.exists(p):
+                found = p
+                break
+        if found:
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            if os.path.abspath(found) != os.path.abspath(dest):
+                shutil.copy2(found, dest)
+        elif not os.path.exists(dest):
+            missing.append(src)
+    return missing
+
+
+DIRECTORY_PAGE_TEMPLATE = """<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>課程簡報目錄</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Sans TC', sans-serif; background: #FAF9F6; color: #1A1A1A;
+           min-height: 100vh; padding: 3rem 1.2rem; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    .tag { display: inline-block; background: #E65C00; color: #fff; font-weight: 700;
+           font-size: 0.85rem; padding: 0.3rem 0.9rem; border-radius: 999px; letter-spacing: 0.1em; }
+    h1 { font-size: 2.2rem; font-weight: 900; margin: 1rem 0 0.4rem; }
+    .sub { color: #666; margin-bottom: 2.2rem; }
+    a.card { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+             background: #fff; border: 2px solid #eee; border-radius: 14px;
+             padding: 1.1rem 1.4rem; margin-bottom: 0.9rem; text-decoration: none; color: inherit;
+             transition: border-color .15s, transform .15s; }
+    a.card:hover { border-color: #E65C00; transform: translateY(-2px); }
+    .name { font-size: 1.25rem; font-weight: 700; }
+    .meta { color: #999; font-size: 0.85rem; margin-top: 0.15rem; }
+    .arrow { color: #E65C00; font-weight: 900; font-size: 1.3rem; flex-shrink: 0; }
+    .footer { text-align: center; color: #bbb; font-size: 0.8rem; margin-top: 2.5rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <span class="tag">AI SLIDES</span>
+    <h1>課程簡報目錄</h1>
+    <p class="sub">點選講題即可開啟互動簡報（手機請橫向觀看）</p>
+__CARDS__
+    <p class="footer">Obsidian → HTML 簡報工作流・自動產生頁面</p>
+  </div>
+</body>
+</html>
+"""
+
+
+def rebuild_directory_page(repo_dir):
+    """重新產生根目錄 index.html：所有已發布講題的目錄頁。"""
+    talks = []
+    for name in os.listdir(repo_dir):
+        if name.startswith(".") or name.startswith("_"):
+            continue
+        talk_index = os.path.join(repo_dir, name, "index.html")
+        if os.path.isdir(os.path.join(repo_dir, name)) and os.path.exists(talk_index):
+            talks.append((name, os.path.getmtime(talk_index)))
+    talks.sort(key=lambda t: -t[1])
+
+    cards = []
+    for name, mtime in talks:
+        date_str = time.strftime("%Y/%m/%d", time.localtime(mtime))
+        url = urllib.parse.quote(name) + "/"
+        cards.append(
+            f'    <a class="card" href="{url}">\n'
+            f'      <div><div class="name">{name}</div>'
+            f'<div class="meta">更新於 {date_str}</div></div>\n'
+            f'      <span class="arrow">→</span>\n'
+            f'    </a>'
+        )
+
+    html = DIRECTORY_PAGE_TEMPLATE.replace("__CARDS__", "\n".join(cards))
+    with open(os.path.join(repo_dir, "index.html"), "w", encoding="utf-8") as f:
+        f.write(html)
+    return len(talks)
+
+
+def compile_presentation(talk_arg=None):
+    # repo 根目錄 = 本腳本所在資料夾（ai-slides git repo）
+    repo_dir = os.path.dirname(os.path.abspath(__file__))
+
+    talks_dir = resolve_talks_dir()
+    course_name, md_file = select_talk(talks_dir, talk_arg)
+
+    # 每個講題發布到 repo 的獨立子資料夾 → 舊講題網址永久有效
+    talk_dir = os.path.join(repo_dir, course_name)
+    os.makedirs(talk_dir, exist_ok=True)
+
+    output_file = os.path.join(talk_dir, "index.html")
+    template_file = os.path.join(repo_dir, "index.template.html")
 
     print("=================== HTML簡報編譯器 ===================")
-    print(f"目前課程專案名稱：{course_name}")
+    print(f"目前編譯講題：{course_name}")
     print(f"1. 讀取備課 Markdown：{md_file}")
     slides = parse_markdown_slides(md_file)
     print(f"   共解析出 {len(slides)} 頁投影片。")
@@ -638,7 +806,7 @@ def compile_presentation():
     # 載入模板並注入內容
     if not os.path.exists(template_file):
         print(f"❌ 錯誤：找不到簡報模板檔案 {template_file}")
-        return
+        sys.exit(1)
 
     with open(template_file, 'r', encoding='utf-8') as f:
         template_content = f.read()
@@ -659,20 +827,41 @@ def compile_presentation():
         f.write(final_html)
 
     print(f"2. 成功輸出簡報檔案：{output_file}")
-    print(f"   (已直接輸出為 index.html，GitHub Pages 可直接使用)")
 
-    # 同步修改 app.js 中的總頁數變數
-    app_js_path = os.path.join(current_dir, "app.js")
+    # 把共用樣式與腳本複製進講題資料夾（每個講題一份，舊講題不受未來改版影響）
+    for shared in ("style.css", "app.js"):
+        src = os.path.join(repo_dir, shared)
+        if os.path.exists(src):
+            shutil.copy2(src, os.path.join(talk_dir, shared))
+
+    # 修改講題資料夾內 app.js 的總頁數變數
+    app_js_path = os.path.join(talk_dir, "app.js")
     if os.path.exists(app_js_path):
         with open(app_js_path, 'r', encoding='utf-8') as f:
             app_js_content = f.read()
-        # 把 totalSlides: \d+ 替換為實際的投影片數量
         updated_app_js = re.sub(r'totalSlides:\s*\d+', f'totalSlides: {total_slides}', app_js_content)
         with open(app_js_path, 'w', encoding='utf-8') as f:
             f.write(updated_app_js)
         print(f"3. 同步修改 app.js 總頁數變數：{total_slides} 頁。")
 
+    # 複製簡報稿引用到的圖片
+    with open(md_file, 'r', encoding='utf-8') as f:
+        md_content = f.read()
+    missing_images = copy_talk_assets(md_content, course_name, talk_dir, repo_dir)
+    if missing_images:
+        print("⚠️  以下圖片找不到來源檔，線上會顯示破圖，請把圖片放進：")
+        print(f"    {os.path.join(ASSETS_BASE_DIR, course_name)}")
+        for m in missing_images:
+            print(f"    - {m}")
+
+    # 重建根目錄的講題目錄頁
+    talk_count = rebuild_directory_page(repo_dir)
+    print(f"4. 已重建講題目錄頁（共 {talk_count} 個講題上線）。")
+
     print("編譯完成！")
+    print(f"   本講題網址：{SITE_BASE_URL}{urllib.parse.quote(course_name)}/")
+    print(f"   講題目錄頁：{SITE_BASE_URL}")
 
 if __name__ == "__main__":
-    compile_presentation()
+    arg = sys.argv[1].strip() if len(sys.argv) > 1 else None
+    compile_presentation(arg)

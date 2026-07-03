@@ -8,7 +8,9 @@ echo.
 echo [1/2] Building slides (Markdown -^> HTML)...
 echo.
 
-python "%~dp0build_presentation.py"
+rem Optional: pass talk name as arg, e.g.  編譯簡報.bat 講題名稱
+rem Without arg: auto-detects the talk in Obsidian "in progress" folder.
+python "%~dp0build_presentation.py" %1
 if errorlevel 1 goto build_fail
 
 echo.
